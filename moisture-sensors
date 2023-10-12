@@ -1,4 +1,5 @@
 ////From https://arduinogetstarted.com/tutorials/arduino-soil-moisture-sensor-pump
+////Moisture sensor + Pump
 
 #define RELAY_PIN       2   // Arduino pin that controls the pump via relay
 #define MOISTURE_PIN    A0  // Arduino pin that connects to the AOUT pin of the moisture sensor
