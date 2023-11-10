@@ -1,51 +1,52 @@
 ///Code is written for Arduino Edge and uses latching relays. Not sure exactly how it will need to be modified for non-latching relays
 ///Code is also for 3-wire US Solid Motorised Ball Valve (9 - 24 V) and uses a 12V power supply
 ///https://docs.arduino.cc/tutorials/edge-control/motorized-ball-valve
+//Functional - worked with Joe, opened 1 valve based on MS 
+#include "Adafruit_seesaw.h"
 
-#include <Arduino_EdgeControl.h>
-
-
-void setup(){
-
-    Serial.begin(9600);
-
-    while(!Serial);
+#define THRESHOLD   800 // Change Threshold here
 
 
-    delay(1000);
 
+Adafruit_seesaw ss;
 
-    Serial.println("3-Wire Valve Demo");
+void setup() {
+  Serial.begin(115200);
 
-
-    EdgeControl.begin();
-
-    Latching.begin();
-
-
-    Serial.println("Starting");
-
+  Serial.println("seesaw Soil Sensor example!");
+  
+  pinMode(5, OUTPUT);
+  digitalWrite(5, LOW); // Makes it so that the valve is normally closed
+  if (!ss.begin(0x36)) {
+    Serial.println("ERROR! seesaw not found");
+    while(1) delay(1);
+  } else {
+    Serial.print("seesaw started! version: ");
+    Serial.println(ss.getVersion(), HEX);
+  }
 }
 
-
-void loop(){
-
-    Serial.println("Closing");
-
-    Latching.channelDirection(LATCHING_OUT_1, POSITIVE);
-
-    Latching.strobe(4500);
-
-    delay(2500);
+void loop() {
+  unsigned long currentTime = millis();
+  
+  
+  
+  float tempC = ss.getTemp();
+  uint16_t capread = ss.touchRead(0);
 
 
-    Serial.println("Opening");
-
-    Latching.channelDirection(LATCHING_OUT_1, NEGATIVE);
-
-    Latching.strobe(4500);
-
-    delay(2500);
+  if(capread <THRESHOLD) {
+    Serial.print ("The soil moisture is DRY => activate valve");
+    digitalWrite(5, HIGH);
+  } else {
+    Serial.print("The soil moisture is WET => deactivate the valve");
+    digitalWrite(5, LOW);
+  }
+  Serial.print("Temperature: "); Serial.print(tempC); Serial.println("*C");
+  Serial.print("Capacitive: "); Serial.println(capread);
+  delay(100);
+  
+  }
 
 }
 
