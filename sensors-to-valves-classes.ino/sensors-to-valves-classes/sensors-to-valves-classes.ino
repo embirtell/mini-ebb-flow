@@ -4,6 +4,8 @@
 
 
 class SoilSensor {
+public: 
+  static const int numSensors = 3; //Number of soil moisture sensors
 private:
   Adafruit_seesaw sensor;
   int sensorIndex;             //sensor index
@@ -43,37 +45,8 @@ public:
     }
     return true;
   }
-
   //Method to read and print data from the sensor
-  void readData() {
-    Serial.print("Reading from Sensor ");
-    Serial.println(sensorIndex + 1);
-
-    //Get temp and capacitive reading from sensor
-    float tempC = getTemperature();
-    uint16_t capRead = getCapacitiveReading(0);
-
-    //Print the obtained data
-    Serial.print("Temperature: ");
-    Serial.println(tempC);
-    Serial.print("Capacitive Reading: ");
-    Serial.println(capRead);
-
-  // Check if the capacitive readings are stable before initiating valve
-    bool stable = areCapReadingsStable(capRead);
-
-    //Open of close the corresponding valve based on the capacitive reading and vavlve status
-    if (capRead < 400) {
-      requestOpenValve(stable); //Request to open valve
-    } else {
-      requestCloseValve(stable); //Request to close valve
-    }
-
-    //Process the valve queue
-    processQueue();
-
-    Serial.println();
-  }
+  void readData();
 
   //Public method to get the valve pin
   int getValvePin() const {
@@ -85,14 +58,78 @@ public:
     return valveOpen;
   }
   //Public method to process the valve queue
-  static void processQueue() {
-    if(queueRequested) {
-     for(int i = 0; i < numSensors)
-  }
+  static void processQueue();
 
 private:
   //private methods to request opening and closing of the valve
-  void requestOpenValve(bool stable) {
+  void requestOpenValve(bool stable);
+  void requestCloseValve(bool stable);
+
+  //private method to open valve
+  void openValve();
+
+  //private method to close valve
+  void closeValve();
+
+  //Private method to print valve status
+  void printValveStatus(bool stable);
+};
+
+//Declaration of global SoilSensor array
+SoilSensor sensors[SoilSensor::numSensors] = {
+  SoilSensor(0, 2),  // Sensor 1 is connected to valve on pin 2
+  SoilSensor(1, 3),  // Sensor 2 is connected to valve on pin 3
+  SoilSensor(2, 4)  // Sensor 3 is connected to valve on pin 4
+  //SoilSensor(3, 5) // Sensor 4 is connected to valve on pin 5
+};
+
+//Definition of static member
+bool SoilSensor::queueRequested = false;  
+
+//definition of processQueue method
+void SoilSensor::processQueue() {
+  if(queueRequested) {
+    for(int i=0; i< numSensors; ++i) {
+      if(!sensors[i].valveOpen) {
+        sensors[i].openValve();
+        queueRequested = false;
+        break; //stop processing the queue after opening one valve
+      }
+    }
+  }
+}  
+
+void SoilSensor::readData() {
+  Serial.print("Reading from Sensor ");
+  Serial.println(sensorIndex + 1);
+
+  //Get temp and capacitive reading from sensor
+  float tempC = getTemperature();
+  uint16_t capRead = getCapacitiveReading(0);
+
+  //Print the obtained data
+  Serial.print("Temperature: ");
+  Serial.println(tempC);
+  Serial.print("Capacitive Reading: ");
+  Serial.println(capRead);
+
+  // Check if the capacitive readings are stable before initiating valve
+  bool stable = areCapReadingsStable(capRead);
+
+  //Open of close the corresponding valve based on the capacitive reading and vavlve status
+  if (capRead < 400) {
+    requestOpenValve(stable); //Request to open valve
+  } else {
+    requestCloseValve(stable); //Request to close valve
+  }
+
+  //Process the valve queue
+  processQueue();
+
+  Serial.println();
+}  
+
+void SoilSensor::requestOpenValve(bool stable) {
     if (!valveOpen) {
       openValve();
     } else {
@@ -103,34 +140,30 @@ private:
     printValveStatus(stable);
   }
   
-  void requestCloseValve(bool stable) {
+void SoilSensor::requestCloseValve(bool stable) {
     if(valveOpen) {
       closeValve();
     }
     printValveStatus(stable);
   }
   
-  //Private methods to open and close the valve
-  void openValve() {
-    digitalWrite(valvePin, HIGH);
-    Serial.print("Valve ");
-    Serial.print(valvePin);
-    Serial.println(" is OPEN");
-    valveOpen = true;
-  }
-  void closeValve() {
-    digitalWrite(valvePin, LOW);
-    Serial.print("Valve ");
-    Serial.print(valvePin);
-    Serial.println(" is CLOSED");
-    valveOpen = false;
-    
-    //Process the queue after closing the valve
-    processQueue();
-  }
+void SoilSensor::openValve() {
+  digitalWrite(valvePin, HIGH);
+  Serial.print("Valve ");
+  Serial.print(valvePin);
+  Serial.println(" is OPEN");
+  valveOpen = true;
+}
+void closeValve() {
+  digitalWrite(valvePin, LOW);
+  Serial.print("Valve ");
+  Serial.print(valvePin);
+  Serial.println(" is CLOSED");
+  valveOpen = false;
+}
 
-  // Private method to print valve status
-  void printValveStatus(bool stable) {
+  // print valve status
+  void SoilSensor::printValveStatus(bool stable) {
     Serial.print("Valve ");
     Serial.print(valvePin);
     Serial.print(" Status: ");
@@ -142,22 +175,14 @@ private:
   }
 };
 
-//Number of soil moisture sensors
-const int numSensors = 3;
 
-//Array of SoilSensor instances representing each sensor and corresponding valve
-SoilSensor sensors[numSensors] = {
-  SoilSensor(0, 2),  // Sensor 1 is connected to valve on pin 2
-  SoilSensor(1, 3),  // Sensor 2 is connected to valve on pin 3
-  SoilSensor(2, 4),  // Sensor 3 is connected to valve on pin 4
-};
 
 void setup() {
   Serial.begin(115200);  //Initialize serial communication
   Wire.begin();          //Initialize I2C communication
 
   // Initialize each soil moisture sensor with a unique I2C address
-  for (int i = 0; i < numSensors; ++i) {
+  for (int i = 0; i < SoilSensor::numSensors; ++i) {
     sensors[i].begin(0x36 + i);  // Assuming each sensor has a unique I2C address
     pinMode(sensors[i].getValvePin(), OUTPUT);
     digitalWrite(sensors[i].getValvePin(), LOW);  // Ensure valves are initially closed
@@ -165,7 +190,7 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < numSensors; ++i) {
+  for (int i = 0; i < SoilSensor::numSensors; ++i) {
     sensors[i].readData();
     delay(2000);  // should have sensors read one at a time
   }
