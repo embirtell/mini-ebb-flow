@@ -43,9 +43,6 @@ public:
   //constructor
   SoilSensor(Valve& valve, uint16_t threshold, int index) : associatedValve(valve), moistureThreshold(threshold), sensorIndex(index){}
 
-  ///SoilSensor(int index) : sensorIndex(index) {}
-  ///SoilSensor(Valve& valve) : associatedValve(valve) {}
-
   //Method to initialize the sensor with a specific I2C address
   void begin(uint8_t i2cAddress) {
     sensor.begin(i2cAddress);
