@@ -307,6 +307,7 @@ void connectToWiFi(){
     Serial.println("\nConnected.");
       myStatus += String("Wifi \nConnected.");
       //ThingSpeak.setStatus(myStatus);
+      delay(errorDelay);
       
   }
 } 
@@ -323,6 +324,7 @@ void printValveStatus() {
       }
 
       anyValveOpen = true;
+      myStatus = valveStatus;
     }
   }
   
@@ -333,7 +335,6 @@ void printValveStatus() {
   Serial.println(valveStatus);
 
   //set myStatus equal to valveStatus
-  myStatus = valveStatus;
   
 }
 
