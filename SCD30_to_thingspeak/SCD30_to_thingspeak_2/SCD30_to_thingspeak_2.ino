@@ -28,9 +28,9 @@ unsigned int co2Field = 3;
 WiFiClient client;
 
 
-int temp_C = scd30.temperature;
-int RH = scd30.relative_humidity;
-int CO2_ppm = scd30.CO2;
+float temp_C = scd30.temperature;
+float RH = scd30.relative_humidity;
+float CO2_ppm = scd30.CO2;
 
 unsigned long elapsedTime = 0;
 unsigned int elapsedTime_sec = 0;
