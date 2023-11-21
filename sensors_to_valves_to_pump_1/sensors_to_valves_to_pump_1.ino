@@ -23,6 +23,12 @@ WiFiClient client;
 unsigned long elapsedTime = 0;
 unsigned long lastUpdateTime = 0;
 
+const int numSensors = 4;
+Queue<int, numSensors> valveQueue;  //Queue to store valve pins
+//Moisture threshold variable
+int moistureThreshold = 400; //Adjust as needed
+
+
 LiquidCrystal_I2C lcd(0x27, 16, 2); // I2C address 0x27, 16 column and 2 rows
 
 bool allValvesClosed = true; // Global flag to indicate whether all valves are closed
@@ -70,7 +76,12 @@ public:
     average /= 3;
 
     //Check stability based on the difference between the current reading
-    return abs(currentReading - average) < 10;
+    bool isStable = abs(currentReading - average) < 5;
+    //stability message for debugging
+    if (!isStable) {
+      displayStabilityWarning();
+    }
+    return isStable;
   }
 
   //Method to read and print data from the sensor
@@ -120,6 +131,8 @@ public:
   bool isValveOpen() const {
     return valveOpen;
   }
+
+
   //Method to open valve
   void openValve(bool &isOpeningValve) {
     digitalWrite(valvePin, HIGH);
@@ -135,8 +148,63 @@ public:
     valveOpen = false;
 
     //Set the flag to indicate that the valve is closed
-    allValvesClosed = true;
+    //allValvesClosed = true;
   }
+
+  //Function to open the next valve in the queue
+void openNextValve(int valvePin, SoilSensor &sensor, bool &isOpeningValve, Queue<int, numSensors> &valveQueue) {
+  // Close any previously opened valve
+  if (valveQueue.size() > 0) {
+    int openValvePin = valveQueue.front();
+    valveQueue.dequeue();
+    closeOpenValve(openValvePin, sensor, isOpeningValve, valveQueue);
+  }
+  
+  //Open the next valve
+  sensor.openValve(isOpeningValve);
+
+  Serial.print("Opening next valve in queue: ");
+  Serial.println(valvePin - 1);
+  myStatus = String("Valve " + String(valvePin - 1) + String(" is opening - 247.")); 
+  ThingSpeak.setStatus(myStatus);
+  
+  unsigned long startTime = millis();
+
+  //wait for the associated sensor to detect wet conditions
+  while (sensor.getCapacitiveReading(0) > moistureThreshold) {
+    delay(500);  // Adjust the delay based on your application's requirements
+    if(millis() - startTime > 10000) { // Set a timeout (e.g., 10 seconds) to prevent blocking indefinitely
+      Serial.println("Timeout: Valve didn't close within Window. Closing Valve.(257)");
+      myStatus = String("Valve " + String(valvePin - 1) + String(" didn't close within Window. Closing Valve.(257)")); 
+      ThingSpeak.setStatus(myStatus);
+      break;
+    }
+  }
+  
+  sensor.closeValve();  // Close the valve after a delay
+  allValvesClosed = true; // Update the flag after closing the valve
+
+  Serial.print("Valve ");
+  Serial.print(valvePin - 1);
+  Serial.println(" is CLOSED (204)");
+  myStatus = String("Valve " + String(valvePin - 1) + String(" is closed(205)")); 
+  ThingSpeak.setStatus(myStatus); 
+}
+void closeOpenValve(int openValvePin, SoilSensor &sensor, bool &isOpeningValve, Queue<int, numSensors> &valveQueue) {
+  // Check if there is any valve currently open and wait until the moisture level is above the threshold
+  while (sensor.getCapacitiveReading(0) < moistureThreshold) {
+    delay(500);
+  }
+   // Close the previously opened valve
+  sensor.closeValve();
+  isOpeningValve = false;
+  Serial.print("Closing previously opened valve: ");
+  Serial.println(openValvePin - 1);
+  myStatus = String("Valve " + String(openValvePin - 1) + String(" is closed (282)")); 
+  ThingSpeak.setStatus(myStatus);
+}
+
+
 
 
 private:
@@ -163,8 +231,8 @@ private:
   }
 };
 //Number of soil moisture sensors
-const int numSensors = 4;
-const int fieldNumber = numSensors;
+
+
 unsigned int ms1_field = 1;
 unsigned int ms2_field = 2;
 unsigned int ms3_field = 3;
@@ -178,10 +246,9 @@ SoilSensor sensors[numSensors] = {
   SoilSensor(3, 5) // Sensor 4 is connected to valve on pin 5
 };
 
-Queue<int, numSensors> valveQueue;  //Queue to store valve pins
 
-//Moisture threshold variable
-int moistureThreshold = 400; //Adjust as needed
+
+
 
 void setup() {
   Serial.begin(115200);  //Initialize serial communication
@@ -234,58 +301,6 @@ void printQueue(Queue<int, numSensors> &q){
   Serial.println();
 }
 
-//Function to open the next valve in the queue
-void openNextValve(int valvePin, SoilSensor &sensor, bool &isOpeningValve) {
-  // Close any previously opened valve
-  if (valveQueue.size() > 0) {
-    int openValvePin = valveQueue.front();
-    valveQueue.dequeue();
-    closeOpenValve(openValvePin, sensor);
-  }
-  
-  //Open the next valve
-  sensor.openValve(isOpeningValve);
-
-  Serial.print("Opening next valve in queue: ");
-  Serial.println(valvePin - 1);
-  myStatus = String("Valve " + String(valvePin - 1) + String(" is opening - 247.")); 
-  ThingSpeak.setStatus(myStatus);
-  
-  unsigned long startTime = millis();
-
-  //wait for the associated sensor to detect wet conditions
-  while (sensor.getCapacitiveReading(0) > moistureThreshold) {
-    delay(500);  // Adjust the delay based on your application's requirements
-    if(millis() - startTime > 10000) { // Set a timeout (e.g., 10 seconds) to prevent blocking indefinitely
-      Serial.println("Timeout: Valve didn't close within Window. Closing Valve.(257)");
-      myStatus = String("Valve " + String(valvePin - 1) + String(" didn't close within Window. Closing Valve.(257)")); 
-      ThingSpeak.setStatus(myStatus);
-      break;
-    }
-  }
-  
-  sensor.closeValve();  // Close the valve after a delay
- 
-  Serial.print("Valve ");
-  Serial.print(valvePin - 1);
-  Serial.println(" is CLOSED (267)");
-  myStatus = String("Valve " + String(valvePin - 1) + String(" is closed(268)")); 
-  ThingSpeak.setStatus(myStatus); 
-}
-
-void closeOpenValve(int openValvePin, SoilSensor &sensor) {
-  // Check if there is any valve currently open and wait until the moisture level is above the threshold
-  while (sensor.getCapacitiveReading(0) < moistureThreshold) {
-    delay(500);
-  }
-   // Close the previously opened valve
-  sensor.closeValve();
-  isOpeningValve = false;
-  Serial.print("Closing previously opened valve: ");
-  Serial.println(openValvePin - 1);
-  myStatus = String("Valve " + String(openValvePin - 1) + String(" is closed (282)")); 
-  ThingSpeak.setStatus(myStatus);
-}
 
 void connectToWiFi(){
  // Connect or reconnect to WiFi
@@ -341,8 +356,8 @@ void loop() {
         
           Serial.print("Valves in Queue: ");
           printQueue(valveQueue);
-          openNextValve(nextValvePin, sensors[i], isOpeningValve); // Pass the isOpeningValve flag   
-    } else {
+          //openNextValve(nextValvePin, sensors[i], isOpeningValve); // Pass the isOpeningValve flag   
+      } else {
         sensors[i].readData(moistureThreshold, nextValveInQueue, isOpeningValve); 
       }
       delay(1000);
@@ -352,7 +367,6 @@ void loop() {
 
     printValveStatus(); 
     
-
     int ms1 = sensors[0].getCapacitiveReading(0);
     int ms2 = sensors[1].getCapacitiveReading(0);
     int ms3 = sensors[2].getCapacitiveReading(0);
@@ -370,7 +384,9 @@ void loop() {
       int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
       if(x == 200) {
         Serial.println("data sent to thingspeak");
-        Serial.print("Elapsed Time: "); Serial.print(elapsedTime/1000); Serial.println(" seconds");
+        Serial.print("Elapsed Time: "); 
+        Serial.print(elapsedTime/1000); 
+        Serial.println(" seconds");
         myStatus = String(valveStatus);
         ThingSpeak.setStatus(myStatus);
         lastUpdateTime = currentTime;
@@ -390,7 +406,7 @@ void loop() {
   } else {
     //If wifi is not connected, attempt to reconnect
     connectToWiFi();
-    }
+  }
 }}
     // Print the valves in the queue after opening a valve
      // Serial.print("Valves in Queue: ");
