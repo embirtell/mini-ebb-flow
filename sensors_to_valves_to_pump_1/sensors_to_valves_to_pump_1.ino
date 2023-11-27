@@ -257,7 +257,7 @@ void setup() {
 // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Communication with WiFi module failed!");
-      //errStatus = String("Communication with Wifi module failed!");
+      myStatus += String("Communication with Wifi module failed!");
     // don't continue
     while (true);
   }
@@ -303,11 +303,12 @@ void connectToWiFi(){
       WiFi.begin(SECRET_SSID); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
       Serial.print(".");
       delay(errorDelay); 
+      
     } 
     Serial.println("\nConnected.");
-      myStatus += String("Wifi \nConnected.");
+      //myStatus += String("Wifi \nConnected.");
       //ThingSpeak.setStatus(myStatus);
-      delay(errorDelay);
+      //delay(errorDelay);
       
   }
 } 
@@ -460,7 +461,9 @@ void loop() {
     }
   } else {
     //If wifi is not connected, attempt to reconnect
+    
     connectToWiFi();
+
   }
 
 
