@@ -86,7 +86,7 @@ public:
     average /= 3;
 
     //Check stability based on the difference between the current reading
-    bool isStable = abs(currentReading - average) < 5;
+    bool isStable = abs(currentReading - average) < 20;
     //stability message for debugging
     if (!isStable) {
       displayStabilityWarning();
