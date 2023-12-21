@@ -2,10 +2,13 @@
 #include "Adafruit_seesaw.h"
 #include <Wire.h>
 #include <Queue.h>
+#include <sequencer4.h>             //imports a 4 function sequencer 
+#include <sequencer1.h>               //imports a 1 function sequencer
 #include <LiquidCrystal_I2C.h>
 #include <WiFiNINA.h>
 #include "secrets.h"
 #include "ThingSpeak.h"
+
 
 //----------------Fill in your Wi-Fi / ThingSpeak Credentials-------
 const String ssid = SECRET_SSID;                                 //The name of the Wi-Fi network you are connecting to

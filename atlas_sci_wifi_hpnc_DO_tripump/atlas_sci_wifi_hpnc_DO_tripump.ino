@@ -70,6 +70,7 @@ unsigned int poll_delay = 2000 - reading_delay * 2 - 300; //how long to wait bet
       //the pump that will do the output (if theres more than one)
 #define PUMP_DOSE_A      1.0      //the dose that the pump will dispense in  milliliters
 #define PUMP_DOSE_B     1.0
+#define DOSE_TIME       1000      // 1 second time for dispensing 
 #define EZO_BOARD         EC        //the circuit that will be the target of comparison
 #define IS_GREATER_THAN   false      //true means the circuit's reading has to be greater than the comparison value, false mean it has to be less than
 #define COMPARISON_VALUE  1700      //the threshold above or below which the pump is activated
@@ -77,11 +78,6 @@ unsigned int poll_delay = 2000 - reading_delay * 2 - 300; //how long to wait bet
 #define PUMP_DOSE_PH         0.5      //the dose that the pump will dispense in  milliliters
 #define IS_GREATER_THAN_PH   true      //true means the circuit's reading has to be greater than the comparison value, false mean it has to be less than
 #define COMPARISON_VALUE_PH  5.85      //the threshold above or below which the pump is activated
-
-
-
-
-
 
 
 float k_val = 0;                                          //holds the k value for determining what to print in the help menu
@@ -105,7 +101,7 @@ void thingspeak_send() {
     if (wifi_isconnected()) {
       int return_code = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
       if (return_code == 200) {                                                          //code for successful transmission
-        Serial.println("sent to thingspeak");
+        Serial.println("  sent to thingspeak");
       } else {
         Serial.println("couldnt send to thingspeak");
       }
@@ -167,7 +163,7 @@ void loop() {
 }
 
 //function that controls the pumps activation and output
-void pump_function(Ezo_board &pump, Ezo_board &sensor, float value, float dose, bool greater_than) {
+void pump_function(Ezo_board &pump, Ezo_board &sensor, float value, float dose,  bool greater_than) {
   if (sensor.get_error() == Ezo_board::SUCCESS) {                    //make sure we have a valid reading before we make any decisions
     bool comparison = false;                                        //variable for holding the reuslt of the comparison
     if (greater_than) {                                             //we do different comparisons depending on what the user wants
@@ -183,7 +179,8 @@ void pump_function(Ezo_board &pump, Ezo_board &sensor, float value, float dose, 
       Serial.print(" ");
       char response[20];
       if (pump.receive_cmd(response, 20) == Ezo_board::SUCCESS) {
-        Serial.print("pump dispensed ");
+        Serial.println("pump dispensed ");
+        
       } else {
         Serial.print("pump error ");
       }
@@ -198,9 +195,12 @@ void step1() {
   //send a read command. we use this command instead of RTD.send_cmd("R");
   //to let the library know to parse the reading
   RTD.send_read_cmd();
+ 
 }
 
 void step2() {
+  
+  Serial.println("");
   receive_and_print_reading(RTD);             //get the reading from the RTD circuit
 
   if ((RTD.get_error() == Ezo_board::SUCCESS) && (RTD.get_last_received_reading() > -1000.0)) { //if the temperature reading has been received and it is valid
@@ -225,6 +225,10 @@ void step3() {
   PH.send_read_cmd();
   EC.send_read_cmd();
   DO.send_read_cmd();
+
+  PMP1.send_read_cmd();
+  PMP2.send_read_cmd();
+  PMP3.send_read_cmd();
 }
 
 void step4() {
@@ -242,23 +246,37 @@ void step4() {
   if (DO.get_error() == Ezo_board::SUCCESS) {                                          //if the DO reading was successful (back in step 1)
     ThingSpeak.setField(4, String(DO.get_last_received_reading(), 2));                 //assign DO readings to the fourth column of thingspeak channel
   }
+  Serial.println("");
 
-  Serial.println("   ");
   if((EC.get_last_received_reading() <= COMPARISON_VALUE)) {
     pump_function(PMP1, EC, COMPARISON_VALUE, PUMP_DOSE_A, IS_GREATER_THAN);
     nutrient_counter_a++;
-    delay(1000);
-    pump_function(PMP2, EC, COMPARISON_VALUE, PUMP_DOSE_B, IS_GREATER_THAN);
-  //  nutrient_counter_b++;
+    
+    receive_and_print_reading(PMP1);             //get the reading from the PMP1 circuit
+    if (PMP1.get_error() == Ezo_board::SUCCESS) {
+      ThingSpeak.setField(5, String(PMP1.get_last_received_reading()));
+    }
+    
+    receive_and_print_reading(PMP2);
+    if (PMP2.get_error() == Ezo_board::SUCCESS) {
+      ThingSpeak.setField(6, String(PMP2.get_last_received_reading()));
+    }
     delay(3000);
   }
+
   if((EC.get_last_received_reading() >= COMPARISON_VALUE)) {
     if(PH.get_last_received_reading() >= COMPARISON_VALUE_PH) {
     delay(1000);
     pump_function(PMP3, PH, COMPARISON_VALUE_PH, PUMP_DOSE_PH, IS_GREATER_THAN_PH);
-    //acid_counter++;
+    acid_counter++;
+    receive_and_print_reading(PMP3);
+    if (PMP2.get_error() == Ezo_board::SUCCESS) {
+      ThingSpeak.setField(7, String(PMP3.get_last_received_reading(), 2));
+      Serial.println("   ");
+      }
     }
   }
+
 //prints the number of doses from each pump...  
 //Serial.print("nut_a doses: ");
 //Serial.println(nutrient_counter_a);
@@ -267,8 +285,6 @@ void step4() {
 //Serial.print("acid doses: ");
 //Serial.println(acid_counter);
 }
-
-
 
 void start_datalogging() {
   polling = true;                                                 //set poll to true to start the polling loop
