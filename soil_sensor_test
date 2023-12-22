@@ -1,1 +1,20 @@
+#include "Adafruit_seesaw.h"
+#include <Wire.h>
+#include <WiFiNINA.h>
+#include "secrets.h"
+#include "ThingSpeak.h"
 
+//----------------Fill in your Wi-Fi / ThingSpeak Credentials-------
+const String ssid = SECRET_SSID;                                 //The name of the Wi-Fi network you are connecting to
+const String pass = SECRET_PASS;                             //Your WiFi network password
+
+unsigned long myChannelNumber = SECRET_CH_ID;                            //Your Thingspeak channel number
+const char * myWriteAPIKey = SECRET_WRITE_APIKEY;                 //Your ThingSpeak Write API Key
+//------------------------------------------------------------------
+
+
+
+
+void setup() {
+  Serial.begin(115200);  //Initialize serial communication
+  Wire.begin();          //Initialize I2C communication
