@@ -3,25 +3,27 @@
 #include "Adafruit_seesaw.h"
 #include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
 
-char ssid[] = SECRET_SSID;   // your network SSID (name) 
+char ssid[] = SECRET_SSID;   // your network SSID (name)
 char pass[] = SECRET_PASS;   // your network password
 WiFiClient  client;
 
 unsigned long myChannelNumber = SECRET_CH_ID;
 const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
+//IOT configuration variables
 const int thingspeakUpdateDelay = 15000;
 long lastThingspeakUpdateTime = 0;
 
 // Initialize our values
 
 String myStatus = "";
+//system configuration varaibles
 const int numSensors = 4;
-Adafruit_seesaw sensor_array[numSensors];
-const int sampleCount = 30; 
-uint16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
-const int samplingDelay = thingspeakUpdateDelay/sampleCount; 
+Adafruit_seesaw sensor_array[numSensors]; //holds the sensor objects
+const int sampleCount = 30; //you decide on how many datapoints should be taken in between updates to thingspeak
+int16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
+const int samplingDelay = thingspeakUpdateDelay/sampleCount; //the delay between each sample taken should be equal to the total delay between updates divided by the number of samples taken
 long lastSampleTime = 0;
-int sampleIndex = 0; 
+int sampleIndex = 0;
 
 void seesawReadData(){
   for(int i = 0; i < numSensors;i++){
@@ -34,7 +36,7 @@ void seesawReadData(){
       sampleArrays[i][sampleIndex] = -1;
   	}else{
   		// ThingSpeak.setField(i+1, int(capread));
-      sampleArrays[i][sampleIndex] = capread;
+        sampleArrays[i][sampleIndex] = capread;
   		Serial.print("Sensor ");
   		Serial.print(i+1);
   		Serial.print(": ");
@@ -65,16 +67,16 @@ void averageSamplesAndPublish(){
       myStatus += String(" readings out of range"); // \n is newline character
       ThingSpeak.setStatus(myStatus);
     }//if(sampleRangleErr > 0){
- 
+
   }//for(int j = 0; j <numSensors;j++){
-  
-  sampleIndex = 0; 
+
+  sampleIndex = 0;
 
 }//void averageSamples()
 
 void setup() {
   Serial.begin(115200);  // Initialize serial
-  
+
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Communication with WiFi module failed!");
@@ -82,11 +84,8 @@ void setup() {
     while (true);
   }
 
-  // String fv = WiFi.firmwareVersion();
-  // if (fv != "1.0.0") {
-  //   Serial.println("Please upgrade the firmware");
-  // }
-    
+
+  //each sensor is started up. Given and I2C address and activated in the sensor_array[]
   ThingSpeak.begin(client);  //Initialize ThingSpeak
   for(int i = 0; i < numSensors;i++){
   	int i2cAddress = 0x36 + i;
@@ -97,8 +96,8 @@ void setup() {
     		Serial.print("seesaw started! version: ");
     		Serial.println(sensor_array[i].getVersion(), HEX);
   	}//if else sensor.begin
-  }//(int i = 0; i < 4;i++) 
-}
+  }//(int i = 0; i < 4;i++)
+}//void setup
 
 void loop() {
 
@@ -109,21 +108,18 @@ void loop() {
     while(WiFi.status() != WL_CONNECTED){
       WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
       Serial.print(".");
-      delay(5000);     
-    } 
+      delay(5000);
+    }
     Serial.println("\nConnected.");
-  }
-	
-	//insert soil moisture reading here 
-  
-  
-  // set the fields with the values
+  }//if wifi
+
+  // time for a new data sample
   if(millis() - lastSampleTime >= samplingDelay ){
     seesawReadData();
     lastSampleTime = millis();
   }//if(millis() - lastSampleTime >= samplingDelay )
-  
-  // set the status
+
+  //time for a new thingspeak update
   if(millis() - lastThingspeakUpdateTime >= thingspeakUpdateDelay ){
     // write to the ThingSpeak channel
     averageSamplesAndPublish();
@@ -135,8 +131,8 @@ void loop() {
     }else{
       Serial.println("Problem updating channel. HTTP error code " + String(x));
       myStatus += String("Problem updating channel. HTTP error code " + String(x));
-      delay(5000);   
+      delay(5000);
     }//if else for thingspeak
-  }//if millis() delay for thingspeak 
-  
-}
+  }//if millis() delay for thingspeak
+
+}//void loop
