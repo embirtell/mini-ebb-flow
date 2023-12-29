@@ -18,7 +18,7 @@ String myStatus = "";
 const int numSensors = 4;
 Adafruit_seesaw sensor_array[numSensors];
 const int sampleCount = 30; 
-uint16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
+int16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
 const int samplingDelay = thingspeakUpdateDelay/sampleCount; 
 long lastSampleTime = 0;
 int sampleIndex = 0; 
