@@ -9,9 +9,6 @@
 
 
 char ssid[] = SECRET_SSID;   // your network SSID (name) 
-=======
-char ssid[] = SECRET_SSID;   // your network SSID (name)
->>>>>>> a7befe8ae179af21083e0ebbacea1d11c1488783
 char pass[] = SECRET_PASS;   // your network password
 
 WiFiClient  client;
@@ -27,18 +24,13 @@ long lastThingspeakUpdateTime = 0;
 String myStatus = "";
 //system configuration varaibles
 const int numSensors = 4;
-<<<<<<< HEAD
 const int numGroveSensors = 1;
-Adafruit_seesaw sensorArray[numSensors];
-const int sampleCount = 30; 
-int16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
-const int samplingDelay = thingspeakUpdateDelay/sampleCount; 
 =======
 Adafruit_seesaw sensor_array[numSensors]; //holds the sensor objects
 const int sampleCount = 30; //you decide on how many datapoints should be taken in between updates to thingspeak
 int16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
 const int samplingDelay = thingspeakUpdateDelay/sampleCount; //the delay between each sample taken should be equal to the total delay between updates divided by the number of samples taken
->>>>>>> a7befe8ae179af21083e0ebbacea1d11c1488783
+
 long lastSampleTime = 0;
 int sampleIndex = 0;
 
@@ -149,11 +141,8 @@ void initWifi() {
 
 void setup() {
   Serial.begin(115200);  // Initialize serial
-<<<<<<< HEAD
-  initWifi();
-=======
 
->>>>>>> a7befe8ae179af21083e0ebbacea1d11c1488783
+  initWifi();
   // check for the WiFi module:
   if (WiFi.status() == WL_CONNECT_FAILED) {
     Serial.println("Communication with WiFi module failed!");
@@ -203,7 +192,6 @@ void loop() {
   }//if wifi
 
   // time for a new data sample
->>>>>>> a7befe8ae179af21083e0ebbacea1d11c1488783
   if(millis() - lastSampleTime >= samplingDelay ){
     seesawReadData();
     groveReadData();
