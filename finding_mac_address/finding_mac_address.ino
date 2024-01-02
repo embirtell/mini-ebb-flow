@@ -1,11 +1,11 @@
-#include <WiFiNINA.h>
+#include "WiFi.h"
 
 void setup() {
   // Initialize serial communication
   Serial.begin(9600);
 
   // Check for the WiFi module
-  if (WiFi.status() == WL_NO_MODULE) {
+  if (WiFi.status() == WL_CONNECT_FAILED) {
     Serial.println("Communication with WiFi module failed!");
     while (true);
   }
