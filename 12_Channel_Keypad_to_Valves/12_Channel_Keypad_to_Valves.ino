@@ -29,7 +29,7 @@
 #include <Arduino.h>
 #include <U8x8lib.h>
 #include <Wire.h>
-#include "SoftwareSerial.h"
+//#include "SoftwareSerial.h"
 #include <HardwareSerial.h>
 #include <multi_channel_relay.h>
 
@@ -55,6 +55,9 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 uint8_t u8log_buffer[U8LOG_WIDTH*U8LOG_HEIGHT];
 U8X8LOG u8x8log;
 
+//for 2 channel relay
+#define Two_channel_relay_1 A0
+
 //for 4-channel relay
 
   /** 
@@ -71,6 +74,7 @@ void setup() {
 	Wire.begin();
   Serial.begin(9600);  // start serial for output
   
+  pinMode(Two_channel_relay_1, OUTPUT); //set 2 channel relay pin as OUTPUT
   
   // Keypad - Configure MySerial0 on pins TX=D6 and RX=D7 (-1, -1 means use the default)
   mySerial.begin(9600, SERIAL_8N1, -1, -1);
@@ -189,9 +193,13 @@ void printData() {
                     //u8x8log.print("\n");
                     break;
                 case 0xE9 :
+                    relay.channelCtrl(0);
                     Serial.println("9 pressed");
-                    u8x8log.print("9");
-                    //u8x8log.print("\n");
+                    u8x8log.print("Pump Relay Blink");
+                    u8x8log.print("\n");
+                    digitalWrite(Two_channel_relay_1, HIGH);
+                    delay(1000);
+                    digitalWrite(Two_channel_relay_1, LOW);
                     break;
                 case 0xEA :
                     Serial.println("* pressed");
