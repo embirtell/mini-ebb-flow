@@ -305,7 +305,7 @@ void setup(void)
   
   u8x8.begin();
   u8x8.setPowerSave(0);
-  
+  u8x8.clearDisplay();
   
 }
 
