@@ -5,8 +5,6 @@
 #include "Adafruit_seesaw.h"
 #include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
 
-<<<<<<< HEAD
-
 
 char ssid[] = SECRET_SSID;   // your network SSID (name) 
 char pass[] = SECRET_PASS;   // your network password
@@ -25,8 +23,7 @@ String myStatus = "";
 //system configuration varaibles
 const int numSensors = 4;
 const int numGroveSensors = 1;
-=======
-Adafruit_seesaw sensor_array[numSensors]; //holds the sensor objects
+Adafruit_seesaw sensorArray[numSensors]; //holds the sensor objects
 const int sampleCount = 30; //you decide on how many datapoints should be taken in between updates to thingspeak
 int16_t sampleArrays[numSensors][sampleCount]; //holds data for averaging
 const int samplingDelay = thingspeakUpdateDelay/sampleCount; //the delay between each sample taken should be equal to the total delay between updates divided by the number of samples taken
@@ -153,6 +150,8 @@ void setup() {
 
   //each sensor is started up. Given and I2C address and activated in the sensor_array[]
   ThingSpeak.begin(client);  //Initialize ThingSpeak
+
+  Wire.begin();
   
   for(int i = 0; i < numSensors; i++){
   	//initialize sensors 
@@ -177,19 +176,10 @@ void loop() {
     while(WiFi.status() != WL_CONNECTED){
       WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
       Serial.print(".");
-<<<<<<< HEAD
       delay(5000);     
     } //while(WiFi.status() != WL_CONNECTED)
     Serial.println("\nConnected.");
   }//if(WiFi.status() != WL_CONNECTED)
-	
-  
-  // set the fields with the values
-=======
-      delay(5000);
-    }
-    Serial.println("\nConnected.");
-  }//if wifi
 
   // time for a new data sample
   if(millis() - lastSampleTime >= samplingDelay ){
