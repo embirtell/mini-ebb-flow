@@ -8,7 +8,7 @@ class Pump {
   public:
     Pump(byte pin);
 
-    void blink(int seconds);
+    void blink(int ms);
     void blink();
     void open();
     void close();

@@ -50,7 +50,7 @@ void loop() {
       Serial.println("Opening");
       channels[i].valveOpen();
       delay(1000);        //Adjust to 3-5 seconds
-      pump.blink(3);
+      pump.blink(3000);
       delay(1000);
       channels[i].valveClose();
       Serial.println("Closing");

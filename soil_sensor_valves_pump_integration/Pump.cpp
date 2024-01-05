@@ -6,9 +6,9 @@ void Pump::setup(char pin){
     pinMode(pin, OUTPUT);
 }
 
-void Pump::blink(int seconds){
+void Pump::blink(int ms){
     digitalWrite(pin, HIGH);
-    delay(seconds*1000);
+    delay(ms);
     digitalWrite(pin, LOW);
 }
 
