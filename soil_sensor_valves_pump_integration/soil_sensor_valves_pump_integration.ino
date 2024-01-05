@@ -5,8 +5,8 @@
 #define SENSOR_THRESHOLD 400
 
 Channel channels[NUM_CHANNELS];
-I2CHub mux;
-Pump pump;
+I2CHub mux; //object for the bus
+Pump pump; //creates object for the pump
 
 void setPort(uint8_t port) {
   Serial.println("Start of port");
@@ -27,11 +27,11 @@ void setup() {
 
   Wire.begin();
 
-  mux.setup(0x70);
-  pump.setup(A0);
+  mux.setup(0x70); 
+  pump.setup(A0); //GPIO pin of pump
   
   for (int i = 0; i < NUM_CHANNELS; i++) {
-    channels[i].setup(0x36 + i, 0x11, i);
+    channels[i].setup(0x36 + i, 0x11, i); //Runs through 0x36 up to 0x39, then adds 0x11 for all of them
     channels[i].setupMux(mux, i, -1);
   }
 }
@@ -43,6 +43,7 @@ void loop() {
     Serial.printf("Channel: %d\n", i);
     setPort(i);
     Serial.println(reading);
+    
 
     if(reading < SENSOR_THRESHOLD) {
       Serial.println("Opening");
