@@ -10,9 +10,9 @@ void Channel::setup(int sensor_addr, int valve_addr, char valve_num, int numChan
   relay.begin(0x11);
 
   //Testing if sensor is working
-  if (!(this -> sensor.begin(sensor_addr))) {
+  if (!this -> sensor.begin(sensor_addr)) { //TODO why prints only finding the last channel
     		Serial.println("ERROR! seesaw not found");
-    		while(1) delay(1);
+    		//while(1) delay(1);
   	} else {
     		Serial.print("seesaw started! version: ");
     		Serial.println(this -> sensor.getVersion(), HEX);
@@ -56,7 +56,7 @@ void Channel::valveClose(){
   relay.channelCtrl(0);
 }
 
-uint16_t Channel::readSensor(){
+uint16_t Channel::readSensor(int sampleNum){
   /*This was commented
   if (useMux && sensor_mux_port != -1) {
     mux->setPort(sensor_mux_port);
@@ -65,11 +65,13 @@ uint16_t Channel::readSensor(){
   uint16_t capread = this->sensor.touchRead(0); //Reading the sensor
   if(capread < 0 || capread > 2000){ 
   		Serial.println("Sensor is not working!");
+      this->sampleArrays[sampleNum] = -1;
       return -1;
   	}else{
-  		//ThingSpeak.setField(i+1, int(capread));
-  		Serial.print("Sensor: ");
+  		///ThingSpeak.setField(i+1, int(capread));
+  		Serial.print("Reading: ");
   		Serial.println(capread);
+      this->sampleArrays[sampleNum] = capread;
       return capread;
   	}
 }
@@ -89,14 +91,18 @@ float Channel::averageSamplesAndPublish(int channelNum){
       }//else
   }//for(int i = 0; i < sampleCount; i++){
   
+
+  
   float avgSample = summation/(sampleCount - sampleRangeErr);
 
   ThingSpeak.setField(channelNum+1, avgSample);
 
-  Serial.print("Sensor ");
-  Serial.print(channelNum+1);
-  Serial.print(" sampleRangeErr: ");
-  Serial.println(sampleRangeErr);
+  Serial.print("Average Sample: ");
+  //Serial.print(channelNum+1);
+  //Serial.print(" ");
+  //Serial.print(" sampleRangeErr: ");
+  //Serial.println(sampleRangeErr);
+  Serial.println(avgSample);
 
   if(sampleRangeErr > 0){
     Serial.println("updating status with error");

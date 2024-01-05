@@ -1,8 +1,14 @@
 #include "wifiConnect.h"
+#include<stdio.h>
+
 
 
 //initiate wifi
 void wifiConnect::initWifi() {
+  int n = WiFi.scanNetworks();
+  for(int i =0; i <n; i++){
+    Serial.printf("Networks available: ", WiFi.SSID(i));
+  }
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pass);
   Serial.print("Connecting to WiFi...");
