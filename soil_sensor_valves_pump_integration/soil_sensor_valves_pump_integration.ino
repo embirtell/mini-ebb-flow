@@ -1,5 +1,9 @@
 #include "valve_sensor_pair.h"
 #include "Pump.h"
+#include "wifiConnect.h"
+#include "ThingSpeak.h" //always include thingspeak header file after other header files and custom macros
+
+
 
 #define NUM_CHANNELS 4
 #define SENSOR_THRESHOLD 400
@@ -25,6 +29,7 @@ Pump pump; //creates object for the pump
 void setup() {
   Serial.begin(115200);
 
+  initWifi();
   Wire.begin();
 
   mux.setup(0x70); 
@@ -37,6 +42,7 @@ void setup() {
 }
 
 void loop() {
+  wifiCheck();
   mux.setPort(0);
   uint16_t reading = 0;
   for (uint8_t i = 0; i < NUM_CHANNELS; i+=1) {
