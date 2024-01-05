@@ -1,11 +1,23 @@
 #include "valve_sensor_pair.h"
 
-void Channel::setup(int sensor_addr, int valve_addr, char valve_num){
+void Channel::setup(int sensor_addr, int valve_addr, char valve_num, int numChannels, int sampleCount){
   this -> sensor_addr = sensor_addr;
   this -> valve_addr = valve_addr;
   this -> valve_num = valve_num;
+  this -> numChannels = numChannels;
+  this -> sampleCount = sampleCount;
+
   relay.begin(0x11);
-  this -> sensor.begin(sensor_addr);
+
+  //Testing if sensor is working
+  if (!(this -> sensor.begin(sensor_addr))) {
+    		Serial.println("ERROR! seesaw not found");
+    		while(1) delay(1);
+  	} else {
+    		Serial.print("seesaw started! version: ");
+    		Serial.println(this -> sensor.getVersion(), HEX);
+  	}//if else sensor.begin
+
   //Serial.printf("Sensor Address: %d\nValve Address: %dValve number: %d\n", sensor_addr, valve_addr, valve_num);
 }
 
@@ -50,5 +62,50 @@ uint16_t Channel::readSensor(){
     mux->setPort(sensor_mux_port);
   }*/
 
-  return this->sensor.touchRead(0);
+  uint16_t capread = this->sensor.touchRead(0); //Reading the sensor
+  if(capread < 0 || capread > 2000){ 
+  		Serial.println("Sensor is not working!");
+      return -1;
+  	}else{
+  		//ThingSpeak.setField(i+1, int(capread));
+  		Serial.print("Sensor: ");
+  		Serial.println(capread);
+      return capread;
+  	}
 }
+
+
+float Channel::averageSamplesAndPublish(int channelNum){
+  
+  String myStatus = "";
+  
+  int summation = 0;
+  int sampleRangeErr = 0;
+  for(int i = 0; i < this->sampleCount; i++) {
+    if(this->sampleArrays[i] < 0){// if data invalid, count sample as error
+      sampleRangeErr++;
+    } else {
+      summation += this->sampleArrays[i];
+      }//else
+  }//for(int i = 0; i < sampleCount; i++){
+  
+  float avgSample = summation/(sampleCount - sampleRangeErr);
+
+  ThingSpeak.setField(channelNum+1, avgSample);
+
+  Serial.print("Sensor ");
+  Serial.print(channelNum+1);
+  Serial.print(" sampleRangeErr: ");
+  Serial.println(sampleRangeErr);
+
+  if(sampleRangeErr > 0){
+    Serial.println("updating status with error");
+    myStatus += String("Sensor ");
+    myStatus += String(channelNum+1);
+    myStatus += String(": ");
+    myStatus += String(sampleRangeErr);
+    myStatus += String(" readings out of range"); // \n is newline character
+    ThingSpeak.setStatus(myStatus);
+  }//if(sampleRangleErr > 0){
+  return avgSample;
+}//void averageSamples()
