@@ -45,7 +45,8 @@ void Channel::valveClose(){
 }
 
 uint16_t Channel::readSensor(){
-  /*if (useMux && sensor_mux_port != -1) {
+  /*This was commented
+  if (useMux && sensor_mux_port != -1) {
     mux->setPort(sensor_mux_port);
   }*/
 

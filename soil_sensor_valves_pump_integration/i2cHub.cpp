@@ -6,12 +6,12 @@ void I2CHub::setup(char addr) {
   currentPort = 0;
   
   //Wire.begin();
-  /*
-  Wire.beginTransmission(this -> addr);
+  //This was commented before
+  /*Wire.beginTransmission(this -> addr);
   Wire.write(0b11111111);
-  Wire.endTransmission();
-  */
-  setPort(0);
+  Wire.endTransmission();*/
+  
+  //setPort(0);
   //Serial.printf("I2C Hub Address: %d\n", addr);
 }
 

@@ -8,7 +8,7 @@ Channel channels[NUM_CHANNELS];
 I2CHub mux;
 Pump pump;
 
-void setPort(uint8_t port) {
+/*void setPort(uint8_t port) {
   Serial.println("Start of port");
   Serial.printf("Port: %d\n", port);
   if (port > 7) return;
@@ -20,7 +20,7 @@ void setPort(uint8_t port) {
   Wire.write(1 << port);
   Serial.println(Wire.endTransmission());
   Serial.println("End of port");
-}
+}*/
 
 void setup() {
   Serial.begin(115200);
@@ -37,11 +37,12 @@ void setup() {
 }
 
 void loop() {
+  mux.setPort(0);
   uint16_t reading = 0;
   for (uint8_t i = 0; i < NUM_CHANNELS; i+=1) {
     reading = channels[i].readSensor();
-    Serial.printf("Channel: %d\n", i);
-    setPort(i);
+    Serial.printf("Channel: %d\n", i+1);
+    mux.setPort(i+1);
     Serial.println(reading);
 
     if(reading < SENSOR_THRESHOLD) {
