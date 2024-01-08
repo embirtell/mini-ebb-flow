@@ -14,6 +14,7 @@ class Channel {
     char valve_mux_port;
     int numChannels;
     int sampleCount;
+    bool valveStatus;
     
     Pump *pump;
     I2CHub *mux;
@@ -27,8 +28,7 @@ class Channel {
     void setupMux(I2CHub mux, char sensor_mux_port, char valve_mux_port);
     void valveClose();
     void valveOpen();
-    void waterPlants();
-    void worktask(void* _this);
+    bool getValveStatus();
     uint16_t readSensor(int SampleNum);
     float averageSamplesAndPublish(int channelNum);
 };

@@ -7,6 +7,7 @@ void Channel::setup(int sensor_addr, int valve_addr, char valve_num, int numChan
   this -> numChannels = numChannels;
   this -> sampleCount = sampleCount;
   this -> pump = &pump;
+  this -> valveStatus = false;
 
   relay.begin(0x11);
 
@@ -48,6 +49,8 @@ void Channel::valveOpen(){
   }
   relay.channelCtrl(0);
   relay.turn_on_channel(valve_num);
+  valveStatus = true;
+  Serial.printf("valveOpen for valve %d\n", valve_num);
 }
 
 void Channel::valveClose(){
@@ -55,6 +58,11 @@ void Channel::valveClose(){
     mux->setPort(valve_mux_port);
   }
   relay.channelCtrl(0);
+  valveStatus = false;
+}
+
+bool Channel::getValveStatus(){
+  return valveStatus;
 }
 
 uint16_t Channel::readSensor(int sampleNum){
@@ -75,33 +83,6 @@ uint16_t Channel::readSensor(int sampleNum){
       this->sampleArrays[sampleNum] = capread;
       return capread;
   	}
-}
-
-void Channel::waterPlants(){
-
-  xTaskCreatePinnedToCore(
-            this->worktask, //Function to implement the task 
-            "waterPlantsTask",     //Name of the task
-            6000,           //Stack size in words 
-            NULL,           //Task input parameter 
-            0,              //Priority of the task 
-            NULL,           //Task handle.
-            1);             //Core where the task should run 
-}
-
-void Channel::worktask(void* _this){
-  Serial.print("waterPlants running on core ");
-  Serial.println(xPortGetCoreID());
-
-  Serial.println("Opening channel");
-  this->valveOpen(); //FIX LATER TODO
-  delay(1000);        //Adjust to 3-5 seconds
-  this->pump.blink(3000);
-  delay(1000);
-  this->valveClose(); //TODO
-  Serial.println("Closing channel");
-
-  vTaskDelete(NULL);
 }
 
 

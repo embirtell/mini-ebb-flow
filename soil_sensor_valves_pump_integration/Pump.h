@@ -4,9 +4,11 @@
 class Pump {
   private:
     char pin;
+    bool running;
 
   public:
     void setup(char pin);
+    bool getRunning();
     void blink(int ms);
     void blink();
     void open();
