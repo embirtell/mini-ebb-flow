@@ -27,6 +27,8 @@ class Channel {
     void setupMux(I2CHub mux, char sensor_mux_port, char valve_mux_port);
     void valveClose();
     void valveOpen();
+    void waterPlants();
+    void worktask(void* _this);
     uint16_t readSensor(int SampleNum);
     float averageSamplesAndPublish(int channelNum);
 };

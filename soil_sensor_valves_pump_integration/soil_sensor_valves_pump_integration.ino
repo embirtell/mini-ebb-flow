@@ -16,23 +16,11 @@ I2CHub mux; //object for the bus
 Pump pump; //creates object for the pump
 wifiConnect wifi; //wifConnect Object
 WiFiClient Client; //WifiClient for Thingspeak
-TaskHandle_t Task1; //Task for watering plants on second core
 
 
 
 void setup() {
   Serial.begin(115200);
-
-   //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
-  xTaskCreatePinnedToCore(
-      Task1code,       /* Task function. */
-      "Task1",         /* name of task. */
-      10000,           /* Stack size of task */
-      NULL,            /* parameter of the task */
-      1,               /* priority of the task */
-      &Task1,          /* Task handle to keep track of created task */
-      0);              /* pin task to core 0 */
-    delay(500);
 
   wifi.initWifi();
   if (WiFi.status() == WL_CONNECT_FAILED) {
@@ -58,12 +46,6 @@ void setup() {
 
 long lastThingspeakUpdateTime = 0;
 
-void Task1code( void * pvParameters ){
-  Serial.print("Task1 running on core ");
-  Serial.println(xPortGetCoreID());
-
-}
-
 void loop() {
   wifi.wifiCheck(); //TODO Add Wifi Error Message 
   for (uint8_t sampleNum = 0; sampleNum < SAMPLE_COUNT; sampleNum++){
@@ -77,11 +59,9 @@ void loop() {
 
   if(millis() - lastThingspeakUpdateTime >= THINGSPEAK_UPDATE_DELAY){ //If 15 seconds have elapsed since last thingSpeak update
     for(int i=0; i < NUM_CHANNELS; i++){ //TODO add 15 second delay to send data, separate valves so doesnt mess with packet sending.
-      float avgReading = channels[i].averageSamplesAndPublish(i);
-      if(avgReading < SENSOR_THRESHOLD) {
-
-
-
+      float avgReading = channels[i].averageSamplesAndPublish(i); //TODO Change function to return myStatus string
+      if(avgReading < SENSOR_THRESHOLD) {//TODO ensure plants arent watered while a valve is already open
+        channel[i].waterPlants();
       }
     }
     lastThingspeakUpdateTime = millis();
