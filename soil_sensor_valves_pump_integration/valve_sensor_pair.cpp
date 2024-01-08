@@ -48,9 +48,9 @@ void Channel::valveOpen(){
     mux->setPort(valve_mux_port);
   }
   relay.channelCtrl(0);
+  delay(10);
   relay.turn_on_channel(valve_num);
   valveStatus = true;
-  Serial.printf("valveOpen for valve %d\n", valve_num);
 }
 
 void Channel::valveClose(){
