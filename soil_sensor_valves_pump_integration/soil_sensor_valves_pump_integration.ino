@@ -70,13 +70,15 @@ void loop() {
         millisValveOpen = millis();
       }
     }
-    int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+    int x = ThingSpeak.writeFields(SECRET_CH_ID, SECRET_WRITE_APIKEY);
     if(x == 200){
       Serial.println("Channel update successful.");
       lastThingspeakUpdateTime = millis();
     }else{
       Serial.println("Problem updating channel. HTTP error code " + String(x));
-      myStatus += String("Problem updating channel. HTTP error code " + String(x));
+      String currentStatus = ThingSpeak.getStatus();
+      currentStatus += String("Problem updating channel. HTTP error code " + String(x));
+      ThingSpeak.setStatus(currentStatus);
       delay(5000);
     }//if else for thingspeak
   }
