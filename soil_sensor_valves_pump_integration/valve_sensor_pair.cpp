@@ -76,6 +76,33 @@ uint16_t Channel::readSensor(int sampleNum){
   	}
 }
 
+void Channel::waterPlants(){
+
+  xTaskCreatePinnedToCore(
+            this->worktask, //Function to implement the task 
+            "waterPlantsTask",     //Name of the task
+            6000,           //Stack size in words 
+            NULL,           //Task input parameter 
+            0,              //Priority of the task 
+            NULL,           //Task handle.
+            1);             //Core where the task should run 
+}
+
+void Channel::worktask(void* _this){
+  Serial.print("waterPlants running on core ");
+  Serial.println(xPortGetCoreID());
+
+  Serial.println("Opening channel");
+  this->valveOpen(); //FIX LATER TODO
+  delay(1000);        //Adjust to 3-5 seconds
+  this->pump.blink(3000);
+  delay(1000);
+  this->valveClose(); //TODO
+  Serial.println("Closing channel");
+
+  vTaskDelete(NULL);
+}
+
 
 float Channel::averageSamplesAndPublish(int channelNum){
   
