@@ -1,11 +1,12 @@
 #include "valve_sensor_pair.h"
 
-void Channel::setup(int sensor_addr, int valve_addr, char valve_num, int numChannels, int sampleCount){
+void Channel::setup(int sensor_addr, int valve_addr, char valve_num, int numChannels, int sampleCount, Pump pump){
   this -> sensor_addr = sensor_addr;
   this -> valve_addr = valve_addr;
   this -> valve_num = valve_num;
   this -> numChannels = numChannels;
   this -> sampleCount = sampleCount;
+  this -> pump = &pump;
 
   relay.begin(0x11);
 
