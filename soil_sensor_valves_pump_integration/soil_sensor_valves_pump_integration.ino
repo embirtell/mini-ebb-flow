@@ -50,7 +50,7 @@ void setup() {
   
   for (int i = 0; i < NUM_CHANNELS; i++) {
     Serial.printf("Setting up channel %d", i+1);
-    channels[i].setup(0x36 + i, 0x11, i, NUM_CHANNELS, SAMPLE_COUNT); //Runs through 0x36 up to 0x39, then adds 0x11 for all of them
+    channels[i].setup(0x36 + i, 0x11, i, NUM_CHANNELS, SAMPLE_COUNT, pump); //Runs through 0x36 up to 0x39, then adds 0x11 for all of them
     channels[i].setupMux(mux, i, -1);
   }
   //Serial.println("channels set up")
