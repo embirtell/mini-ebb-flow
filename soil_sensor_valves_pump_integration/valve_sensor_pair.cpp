@@ -120,7 +120,9 @@ float Channel::averageSamplesAndPublish(int channelNum){
     myStatus += String(": ");
     myStatus += String(sampleRangeErr);
     myStatus += String(" readings out of range"); // \n is newline character
-    ThingSpeak.setStatus(myStatus);
+
+    String currentStatus = ThingSpeak.getStatus();
+    ThingSpeak.setStatus(currentStatus + myStatus);
   }//if(sampleRangleErr > 0){
   return avgSample;
 }//void averageSamples()

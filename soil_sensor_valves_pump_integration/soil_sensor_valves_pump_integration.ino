@@ -18,6 +18,7 @@ Pump pump; //creates object for the pump
 wifiConnect wifi; //wifConnect Object
 WiFiClient Client; //WifiClient for Thingspeak
 long millisValveOpen;
+long lastThingspeakUpdateTime = 0;
 
 
 
@@ -46,8 +47,6 @@ void setup() {
   //Serial.println("channels set up")
 }
 
-long lastThingspeakUpdateTime = 0;
-
 void loop() {
   wifi.wifiCheck(); //TODO Add Wifi Error Message 
   for (uint8_t sampleNum = 0; sampleNum < SAMPLE_COUNT; sampleNum++){
@@ -71,7 +70,17 @@ void loop() {
         millisValveOpen = millis();
       }
     }
-    lastThingspeakUpdateTime = millis();
+    int x = ThingSpeak.writeFields(SECRET_CH_ID, SECRET_WRITE_APIKEY);
+    if(x == 200){
+      Serial.println("Channel update successful.");
+      lastThingspeakUpdateTime = millis();
+    }else{
+      Serial.println("Problem updating channel. HTTP error code " + String(x));
+      String currentStatus = ThingSpeak.getStatus();
+      currentStatus += String("Problem updating channel. HTTP error code " + String(x));
+      ThingSpeak.setStatus(currentStatus);
+      delay(5000);
+    }//if else for thingspeak
   }
 
   if(millis() - millisValveOpen > FLOOD_TIME && pump.getRunning()) {
@@ -81,25 +90,7 @@ void loop() {
     pump.close();
     Serial.println("Pump stopped");
   }
-  
 
-  //REFERENCE CODE TO ADD ERROR-CODES FOR UNSUCESSFUL PUSHES TO THINGSPEAK
-  /*//time for a new thingspeak update
-  if(millis() - lastThingspeakUpdateTime >= thingspeakUpdateDelay ){
-    // write to the ThingSpeak channel
-    averageSamplesAndPublish();
-    ThingSpeak.setStatus(myStatus);
-    
-    int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-    if(x == 200){
-      Serial.println("Channel update successful.");
-      lastThingspeakUpdateTime = millis();
-    }else{
-      Serial.println("Problem updating channel. HTTP error code " + String(x));
-      myStatus += String("Problem updating channel. HTTP error code " + String(x));
-      delay(5000);
-    }//if else for thingspeak
-  }//if millis() delay for thingspeak*/
 
   
   /*
